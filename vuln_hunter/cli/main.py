@@ -2,35 +2,33 @@
 from __future__ import annotations
 
 import asyncio
+import sys
 import typer
 from rich.console import Console
 from rich.table import Table
 from vuln_hunter.tools.registry import get_registry
 
 console = Console()
-
-BANNER = "[bold cyan]  VulnHunterAI v1.0.0 — Autonomous AI Pentest Framework[/bold cyan]\n"
-
-app = typer.Typer(name="vulnhunter", add_completion=False, no_args_is_help=True)
+app = typer.Typer(name="vulnhunter", add_completion=False)
 
 
 @app.command()
 def scan(
-    target: str = typer.Argument(..., help="Target URL, IP, or domain"),
+    target: str = typer.Argument(..., metavar="TARGET", help="Target URL, IP, or domain"),
     scope: str = typer.Option("", "-s", "--scope", help="Scope file"),
     intensity: str = typer.Option("normal", "-i", "--intensity", help="safe|normal|aggressive|insane"),
     mode: str = typer.Option("sequential", "-m", "--mode", help="sequential|swarm"),
     max_cost: float = typer.Option(10.0, "--max-cost", help="Max USD"),
 ):
     """Start a full pentest engagement against a target."""
-    print(BANNER)
+    console.print("[bold cyan]VulnHunterAI v1.0.0[/bold cyan]")
     console.print(f"[green]Target:[/green] {target}  [cyan]Mode:[/cyan] {mode}  [cyan]Intensity:[/cyan] {intensity}")
     r = get_registry()
     console.print(f"[green]Tools:[/green] {r.installed_count}/{r.total_count} installed")
     try:
         from vuln_hunter.core.orchestrator import Orchestrator
         from vuln_hunter.core.llm_provider import LLMProvider, ProviderType
-        provider = LLMProvider(ProviderType.OPENROUTER, max_cost=max_cost)
+        provider = LLMProvider(ProviderType.OPENROUTER)
         orch = Orchestrator(provider=provider, max_cost=max_cost)
         loop = asyncio.new_event_loop()
         state = loop.run_until_complete(orch.run(target))
@@ -41,26 +39,32 @@ def scan(
 
 @app.command()
 def quick(
-    target: str = typer.Argument(..., help="Target URL, IP, or domain"),
+    target: str = typer.Argument(..., metavar="TARGET", help="Target URL, IP, or domain"),
     intensity: str = typer.Option("normal", "-i", "--intensity"),
 ):
     """Fast scan with default settings."""
-    print(BANNER)
+    console.print("[bold cyan]VulnHunterAI v1.0.0[/bold cyan]")
     console.print(f"[green]Quick scan[/green] -> {target} ({intensity})")
 
 
 @app.command()
-def scope_cmd(
-    action: str = typer.Argument(..., help="add|remove|validate|list"),
+def scope(
+    action: str = typer.Argument(..., metavar="ACTION", help="add|remove|validate|list"),
     value: str = typer.Option("", "-v", "--value", help="Value"),
-    scope_file: str = typer.Option("scope.txt", "-f", "--file", help="Scope file"),
+    scope_file: str = typer.Option("scope.txt", "-f", "--file", help="Scope file path"),
 ):
-    """Manage engagement scope. Use: vulnhunter scope-cmd add -v *.example.com"""
+    """Manage engagement scope. Create a scope file with domains (one per line)."""
     from vuln_hunter.engine.scope.scope import ScopeEnforcer
     se = ScopeEnforcer(scope_file)
     if action == "add":
         se.add_allowed(value)
-        console.print(f"[green]+[/green] {value}")
+        # Persist to scope file
+        try:
+            with open(scope_file, "a") as f:
+                f.write(value + "\n")
+            console.print(f"[green]+[/green] {value} (appended to {scope_file})")
+        except Exception:
+            console.print(f"[green]+[/green] {value} (memory only)")
     elif action == "remove":
         se.remove(value)
         console.print(f"[yellow]-[/yellow] {value}")
@@ -68,8 +72,12 @@ def scope_cmd(
         ok = se.is_in_scope(value)
         console.print(f"{value} -> {'[green]IN SCOPE[/green]' if ok else '[red]OUT[/red]'}")
     elif action == "list":
-        for d in se._allowed_domains:
-            console.print(f"  {d}")
+        domains = se._allowed_domains
+        if domains:
+            for d in domains:
+                console.print(f"  {d}")
+        else:
+            console.print(f"[dim]No entries. Create {scope_file} or use 'scope add'[/dim]")
     else:
         console.print(f"[red]Unknown:[/red] {action}")
 
@@ -119,13 +127,9 @@ def status():
 @app.command()
 def version():
     """Show version."""
-    import sys
-    print(BANNER.strip())
+    console.print("[bold cyan]VulnHunterAI v1.0.0[/bold cyan]")
     console.print(f"Python {sys.version.split()[0]}")
 
 
-def cli_main():
-    app()
-
 if __name__ == "__main__":
-    cli_main()
+    app()
