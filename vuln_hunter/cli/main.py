@@ -131,5 +131,8 @@ def version():
     console.print(f"Python {sys.version.split()[0]}")
 
 
-if __name__ == "__main__":
+def cli_main():
     app()
+
+if __name__ == "__main__":
+    cli_main()
