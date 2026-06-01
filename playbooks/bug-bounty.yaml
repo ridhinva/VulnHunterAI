@@ -1,0 +1,7 @@
+name: Bug Bounty
+phases:
+  - {name: recon, tools: [subfinder, amass, httpx, naabu], timeout: 600}
+  - {name: scan, tools: [nuclei, dalfox, sqlmap], timeout: 900}
+  - {name: report, format: [markdown, sarif]}
+scope: {enforce_strict: true}
+intensity: normal

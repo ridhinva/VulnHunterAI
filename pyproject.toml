@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vulnhunter-ai"
+version = "1.0.0"
+description = "Autonomous AI-powered penetration testing framework with swarm intelligence"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+dependencies = [
+    "pydantic>=2.0", "pydantic-settings>=2.0", "pyyaml>=6.0",
+    "python-dotenv>=1.0", "jinja2>=3.1", "click>=8.1", "rich>=13.0",
+    "typer>=0.9", "structlog>=24.1", "tenacity>=8.2",
+    "openai>=1.0", "anthropic>=0.40", "litellm>=1.50",
+    "httpx>=0.27", "aiohttp>=3.9", "requests>=2.31",
+    "beautifulsoup4>=4.12", "dnspython>=2.6",
+    "aiosqlite>=0.20", "aiofiles>=24.0",
+    "cryptography>=42.0", "scapy>=2.5", "paramiko>=3.4",
+    "fastmcp>=2.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0", "pytest-asyncio>=0.23", "ruff>=0.4", "mypy>=1.0"]
+browser = ["playwright>=1.40"]
+all = ["vulnhunter-ai[dev,browser]"]
+
+[project.scripts]
+vulnhunter = "vuln_hunter.cli.main:cli_main"
+vh = "vuln_hunter.cli.main:cli_main"
+
+[tool.setuptools.packages.find]
+include = ["vuln_hunter*"]
+
+[tool.black]
+line-length = 160
+target-version = ["py310"]
+
+[tool.ruff]
+line-length = 160
+target-version = "py310"
+select = ["E", "F", "W", "I"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

@@ -1,0 +1,17 @@
+model: openrouter/owl-alpha
+provider: openrouter
+base_url: https://openrouter.ai/api/v1
+api_key: ${OPENROUTER_API_KEY}
+tools_timeout: 300
+max_cost: 50.0
+output_dir: results
+scope_strict: true
+logging:
+  level: info
+  format: console
+claude:
+  model: claude-sonnet-4-20250514
+  max_tokens: 16384
+swarm:
+  max_parallel_agents: 4
+  pheromone_decay: true
