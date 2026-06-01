@@ -125,6 +125,32 @@ def status():
 
 
 @app.command()
+def gravatar(
+    email: str = typer.Argument(..., help="Email to look up"),
+):
+    """Look up a Gravatar profile by email (no API key needed)."""
+    with console.status(f"[cyan]Looking up Gravatar for {email}...[/cyan]"):
+        from vuln_hunter.integrations.gravatar import lookup_gravatar
+        result = lookup_gravatar(email)
+
+    if result.get("found"):
+        t = Table(title=f"Gravatar: {email}")
+        t.add_column("Field", style="cyan")
+        t.add_column("Value", style="green")
+        t.add_row("Display Name", result.get("display_name", ""))
+        t.add_row("Profile", result.get("profile_url", ""))
+        t.add_row("Photo", result.get("thumbnail_url", ""))
+        if result.get("accounts"):
+            for a in result["accounts"]:
+                t.add_row(f"  {a['service']}", a.get("url", ""))
+        console.print(t)
+    elif result.get("found") is False:
+        console.print(f"[yellow]No Gravatar found for {email}[/yellow]")
+    else:
+        console.print(f"[red]Error:[/red] {result.get('error', 'unknown')}")
+
+
+@app.command()
 def version():
     """Show version."""
     console.print("[bold cyan]VulnHunterAI v1.0.0[/bold cyan]")
